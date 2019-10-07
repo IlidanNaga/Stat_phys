@@ -37,6 +37,9 @@ public class Main extends Application {
     private int ball_num = 0;
     private double init_speed = 3;
 
+    // flag for pause/unpause
+    private boolean pause = false;
+
     // adding globally used sliders and labels
     private Label pair_am_lab = new Label();
     private Slider pair_am_sl = new Slider();
@@ -52,12 +55,9 @@ public class Main extends Application {
 
     // adding globally used buttons (a.k.a. exit button)
 
-    private Button button_a_pair = new Button("Add Pair");
-
     private Button button_exit = new Button("Выход");
     private Button button_pause = new Button("Пауза");
     private Button button_start = new Button("Перезапуск");
-    private Button button_rerun = new Button("Продолжить");
     private Button button_back = new Button("Назад");
 
     // variables of active zone size
@@ -144,38 +144,18 @@ public class Main extends Application {
         addPair();
 
         // buttons section
-
-        //back
-        // coordinates of top left corner (i guess) and pref size
-        button_a_pair.setTranslateX(20);
-        button_a_pair.setTranslateY(20);
-        // sizes
-        button_a_pair.setMinWidth(100);
-        button_a_pair.setMinHeight(10);
-
-        // action when button is pressed
-        button_a_pair.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent actionEvent) {
-                addPair();
-            }
-        });
-
-        root.getChildren().add(button_a_pair);
-
-        //exit
-        button_exit.setTranslateX(120);
-        button_exit.setTranslateY(20);
-        button_exit.setMinWidth(100);
-        button_exit.setMinHeight(10);
-
-        root.getChildren().add(button_exit);
-
         // pause
         button_pause.setTranslateX(1235);
         button_pause.setTranslateY(350);
         button_pause.setMinWidth(130);
         button_pause.setMinHeight(20);
+
+        button_pause.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                buttonPauseAction();
+            }
+        });
 
         root.getChildren().add(button_pause);
 
@@ -193,13 +173,13 @@ public class Main extends Application {
 
         root.getChildren().add(button_start);
 
-        // re-running program without restarting it
-        button_rerun.setTranslateX(1100);
-        button_rerun.setTranslateY(380);
-        button_rerun.setMinWidth(130);
-        button_rerun.setMinHeight(20);
+        // exit
+        button_exit.setTranslateX(1100);
+        button_exit.setTranslateY(380);
+        button_exit.setMinWidth(130);
+        button_exit.setMinHeight(20);
 
-        root.getChildren().add(button_rerun);
+        root.getChildren().add(button_exit);
 
         //pushing back from this frame
         button_back.setTranslateX(1235);
@@ -306,6 +286,10 @@ public class Main extends Application {
     }
 
     private void buttonStartAction() {
+
+        pause = false;
+        button_pause.setText("Пауза");
+
         l_lim = base_l_lim;
 
         double pair_am = Math.round(pair_am_sl.getValue());
@@ -347,6 +331,16 @@ public class Main extends Application {
             pair_am --;
         }
 
+    }
+
+    private void buttonPauseAction() {
+        if (!pause) {
+            button_pause.setText("Продолжить");
+            pause = true;
+        } else {
+            button_pause.setText("Пауза");
+            pause = false;
+        }
     }
 
     private ArrayList<Ball[]> all_balls = new ArrayList();
@@ -395,131 +389,138 @@ public class Main extends Application {
     // loop function
     private void update() {
 
-        //moving the walls
-        // setting bot limit of x to 50, top limit to 150
+        if (!pause) {
+            //moving the walls
+            // setting bot limit of x to 50, top limit to 150
 
-        if (l_lim < 50 || l_lim > 150) {
-            wall_speed *= -1;
-        }
-        l_lim += wall_speed;
+            if (l_lim < 50 || l_lim > 150) {
+                wall_speed *= -1;
+            }
+            l_lim += wall_speed;
 
-        line1.setStartX(l_lim);
-        line1.setEndX(l_lim);
+            line1.setStartX(l_lim);
+            line1.setEndX(l_lim);
 
-        line2.setStartX(l_lim);
-        line3.setStartX(l_lim);
-
-
-
-        //collision of ball:
-        all_balls.forEach(pair -> {
-
-            int pos = all_balls.indexOf(pair);
-
-            double[] x_coords = new double[2];
-            double[] y_coords = new double[2];
-
-            for (int i = 0; i < 2; i++) {
-
-                Ball s = pair[i];
-
-                Bounds boundsInScene = s.localToScene(s.getBoundsInLocal());
-
-                double min_x = boundsInScene.getMinX();
-                double min_y = boundsInScene.getMinY();
-                double max_x = boundsInScene.getMaxX();
-                double max_y = boundsInScene.getMaxY();
-
-                double x = (min_x + max_x) / 2;
-                double y = (min_y + max_y) / 2;
-
-                if (s.getBoundsInParent().intersects(line1.getBoundsInParent())) {
-                    s.Bump_left(wall_speed);
-                }
-
-                if (s.getBoundsInParent().intersects(line2.getBoundsInParent())) {
-                    s.Bump_top_bot();
-                }
-
-                if (s.getBoundsInParent().intersects(line3.getBoundsInParent())) {
-                    s.Bump_top_bot();
-                }
+            line2.setStartX(l_lim);
+            line3.setStartX(l_lim);
 
 
-                // it must work another way, but for now it'd be fine
-                if (rad_x >= 0) {
-                    // external shape
-                    if (max_x >= r_lim) {
-                        if (ellipsis(x, y) && s.timer < 1) {
-                            s.timer = 2;
-                            s.bumpArc(x, y, r_lim, cent_y, rad_x, rad_y); // в тесте соотношение координат работает как-то так
+            //collision of ball:
+            all_balls.forEach(pair -> {
+
+                boolean collision_this_frame = false;
+
+                int pos = all_balls.indexOf(pair);
+
+                double[] x_coords = new double[2];
+                double[] y_coords = new double[2];
+
+                for (int i = 0; i < 2; i++) {
+
+                    Ball s = pair[i];
+
+                    Bounds boundsInScene = s.localToScene(s.getBoundsInLocal());
+
+                    double min_x = boundsInScene.getMinX();
+                    double min_y = boundsInScene.getMinY();
+                    double max_x = boundsInScene.getMaxX();
+                    double max_y = boundsInScene.getMaxY();
+
+                    double x = (min_x + max_x) / 2;
+                    double y = (min_y + max_y) / 2;
+
+                    if (s.getBoundsInParent().intersects(line1.getBoundsInParent())) {
+                        s.Bump_left(wall_speed);
+                        collision_this_frame = true;
+                    }
+
+                    if (s.getBoundsInParent().intersects(line2.getBoundsInParent())) {
+                        s.Bump_top_bot();
+                        collision_this_frame = true;
+                    }
+
+                    if (s.getBoundsInParent().intersects(line3.getBoundsInParent())) {
+                        s.Bump_top_bot();
+                        collision_this_frame = true;
+                    }
+
+
+                    // it must work another way, but for now it'd be fine
+                    if (rad_x >= 0) {
+                        // external shape
+                        if (max_x >= r_lim) {
+                            if (ellipsis(x, y) && s.timer < 1) {
+                                s.timer = 2;
+                                s.bumpArc(x, y, r_lim, cent_y, rad_x, rad_y); // в тесте соотношение координат работает как-то так
+                                collision_this_frame = true;
+                            }
+
                         }
+                    } else {
+                        // internal shape
+                        if (max_x >= r_lim + rad_x - ball_rad) {
+                            if (!ellipsis(x, y) && s.timer < 1) {
+                                s.timer = 2;
+                                s.inner_bumpArc(x, y, r_lim, cent_y, rad_x, rad_y);
+                                collision_this_frame = true;
+                            }
+                        }
+                    }
+                    s.timer -= 1;
+
+                    if (y < t_lim + ball_rad && s.speed_y < 0) {
+                        s.speed_y *= -1;
+                    }
+
+                    if (y > b_lim - ball_rad && s.speed_y > 0) {
+                        s.speed_y *= -1;
+                    }
+
+                    s.move();
+
+                    Bounds bound2;
+
+                    boolean flag = true;
+
+                    while (flag) {
+                        bound2 = s.localToScene(s.getBoundsInLocal());
+
+                        min_x = bound2.getMinX();
+                        min_y = bound2.getMinY();
+                        max_x = bound2.getMaxX();
+                        max_y = bound2.getMaxY();
+                        if (min_x >= l_lim - ball_rad && min_y >= t_lim - 1 && max_y <= b_lim + 1)
+                            flag = false;
+
+                        if (min_x < l_lim - ball_rad) {
+                            s.shiftRight();
+
+                        }
+                        if (min_y < t_lim - 1)
+                            s.shiftBot();
+
+                        if (max_y > b_lim + 1)
+                            s.shiftTop();
+
 
                     }
-                } else {
-                    // internal shape
-                    if (max_x >= r_lim + rad_x - ball_rad) {
-                        if (!ellipsis(x, y) && s.timer < 1) {
-                            s.timer = 2;
-                            s.inner_bumpArc(x, y, r_lim, cent_y, rad_x, rad_y);
-                        }
-                    }
-                }
-                s.timer -= 1;
 
-                if (y < t_lim + ball_rad && s.speed_y < 0) {
-                    s.speed_y *= -1;
-                }
 
-                if (y > b_lim - ball_rad && s.speed_y > 0) {
-                    s.speed_y *= -1;
-                }
-
-                s.move();
-
-                Bounds bound2;
-
-                boolean flag = true;
-
-                while (flag) {
                     bound2 = s.localToScene(s.getBoundsInLocal());
 
-                    min_x = bound2.getMinX();
-                    min_y = bound2.getMinY();
-                    max_x = bound2.getMaxX();
-                    max_y = bound2.getMaxY();
-                    if (min_x >= l_lim - 1 && min_y >= t_lim - 1 && max_y <= b_lim + 1)
-                        flag = false;
-
-                    if (min_x < l_lim - 1) {
-                        s.shiftRight();
-
-                    }
-                    if (min_y < t_lim - 1)
-                        s.shiftBot();
-
-                    if (max_y > b_lim + 1)
-                        s.shiftTop();
-
+                    x_coords[s.number % 2] = (bound2.getMaxX() + bound2.getMinX()) / 2;
+                    y_coords[s.number % 2] = (bound2.getMaxY() + bound2.getMinY()) / 2;
 
                 }
 
+                all_links.get(pos).setStartX(x_coords[0]);
+                all_links.get(pos).setEndX(x_coords[1]);
+                all_links.get(pos).setStartY(y_coords[0]);
+                all_links.get(pos).setEndY(y_coords[1]);
 
 
-                bound2 = s.localToScene(s.getBoundsInLocal());
-
-                x_coords[s.number % 2] = (bound2.getMaxX() + bound2.getMinX()) / 2;
-                y_coords[s.number % 2] = (bound2.getMaxY() + bound2.getMinY()) / 2;
-
-            }
-
-            all_links.get(pos).setStartX(x_coords[0]);
-            all_links.get(pos).setEndX(x_coords[1]);
-            all_links.get(pos).setStartY(y_coords[0]);
-            all_links.get(pos).setEndY(y_coords[1]);
-
-
-        });
+            });
+        }
 
         pair_am_lab.setText("Число пар: " + Math.round(pair_am_sl.getValue()));
         init_speed_lab.setText("Начальная скорость: " + Math.round(init_speed_sl.getValue()));
@@ -810,7 +811,7 @@ public class Main extends Application {
             setTranslateX(getTranslateX() - 1);
         }
         void shiftRight() {
-            setTranslateX(getTranslateX() + 1);
+            setTranslateX(getTranslateX() + this.radius);
         }
 
     }
