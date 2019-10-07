@@ -2,14 +2,23 @@ package sample;
 
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
+import javafx.beans.binding.Bindings;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Bounds;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Group;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.Slider;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.*;
+import javafx.scene.text.Font;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 import java.util.*;
@@ -17,17 +26,50 @@ import java.util.stream.Collectors;
 
 public class Main extends Application {
 
+    // scene item
+
     private Pane root = new Pane();
 
+    // spawn position for new balls
+
+    private int ball_start_x  = 150;
+    private int ball_start_y = 150;
+    private int ball_num = 0;
+
+    // adding globally used sliders and labels
+    private Label pair_am_lab = new Label();
+    private Slider pair_am_sl = new Slider();
+
+    private Slider init_speed_sl = new Slider();
+    private Label init_speed_lab = new Label();
+
+    private Slider curve_rad_sl = new Slider();
+    private Label curve_rad_lab = new Label();
+
+    private Slider wall_speed_sl = new Slider();
+    private Label wall_speed_lab = new Label();
+
+    // adding globally used buttons (a.k.a. exit button)
+
+    private Button button_back = new Button("Add Pair");
+    private Button button_exit = new Button("Выход");
+    private Button button_pause = new Button("Пауза");
+    private Button button_start = new Button("Запуск");
+
+    // variables of active zone size
     private double l_lim = 100;
     private double r_lim = 700;
     private double t_lim = 100;
     private double b_lim = 500;
     private double rad_x = 100;
+
+    // united ball radius
     private int ball_rad = 10;
 
-    private double wall_speed = 1;
+    // speed of left wall
+    private double wall_speed = 10;
 
+    // Y position and Y rad of arc
     private double cent_y = (b_lim + t_lim) / 2;
     private double rad_y = (b_lim - t_lim) / 2;
 
@@ -36,35 +78,29 @@ public class Main extends Application {
     private Line line2 = new Line(l_lim, t_lim, r_lim, t_lim); // top
     private Line line3 = new Line(l_lim, b_lim, r_lim, b_lim); // bot
 
+    // pre-set for arc
     private MoveTo start = new MoveTo();
     private ArcTo finish = new ArcTo();
     private Path arc = new Path();
 
     // somewhy it creates with coordinates like 600x425
     // so our area is within 50, 50 - 350, 250
-    private Ball ball1 = new Ball(150, 100, ball_rad, 3, 0, Color.GREEN, 0);
 
-    private Ball ball2 = new Ball( 200, 150, ball_rad, -2, 4, Color.GREEN, 1);
-
-    private Ball ball3 = new Ball(60, 150, ball_rad, 0.5, 0, Color.RED, 2);
-
-    private Line line_link = new Line();
-
-
-
+    // creates init scene
     private Parent createContent() {
-        root.setPrefSize(1200, 900);
-
+        // colors of borders
         line1.setStroke(Color.BLUE);
         line2.setStroke(Color.BLUE);
         line3.setStroke(Color.BLUE);
         arc.setStroke(Color.BLUE);
 
+        // setting borders
+
         root.getChildren().add(line1);
         root.getChildren().add(line2);
         root.getChildren().add(line3);
 
-        if (rad_x >= 0) {
+        if (rad_x >= 0) { // right-oriented shape
             start.setX(r_lim);
             start.setY(b_lim);
 
@@ -75,7 +111,7 @@ public class Main extends Application {
             finish.setY(t_lim);
             finish.setLargeArcFlag(false);
             finish.setSweepFlag(false);
-        } else {
+        } else { // left-oriented shape
             start.setX(r_lim);
             start.setY(t_lim);
 
@@ -92,22 +128,131 @@ public class Main extends Application {
 
         root.getChildren().add(arc);
 
-        root.getChildren().add(ball1);
-        root.getChildren().add(ball2);
+        // borders
 
-        root.getChildren().add(ball3);
+        root.getChildren().add(new Line(25, 75, 1025, 75));
+        root.getChildren().add(new Line(25, 75, 25, 525));
+        root.getChildren().add(new Line(25, 525, 1025, 525));
+        root.getChildren().add(new Line(1025, 525, 1025, 75));
 
-        if (rad_x >= 0) {
-            root.getChildren().add(new Line(r_lim, t_lim, r_lim, b_lim));
-            root.getChildren().add(new Line(r_lim + rad_x, t_lim, r_lim + rad_x, b_lim));
+        // adding first pair
+        addPair();
 
-        }
-        else {
-            root.getChildren().add(new Line(r_lim + rad_x - ball_rad, t_lim, r_lim + rad_x - ball_rad, b_lim));
-        }
-        line_link.setStroke(Color.GREEN);
+        // buttons section
 
-        root.getChildren().add(line_link);
+        // coordinates of top left corner (i guess) and pref size
+        button_back.setTranslateX(20);
+        button_back.setTranslateY(20);
+        // sizes
+        button_back.setMinWidth(100);
+        button_back.setMinHeight(10);
+
+        // action when button is pressed
+        button_back.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                addPair();
+            }
+        });
+
+        root.getChildren().add(button_back);
+
+        button_exit.setTranslateX(120);
+        button_exit.setTranslateY(20);
+        button_exit.setMinWidth(100);
+        button_exit.setMinHeight(10);
+
+        root.getChildren().add(button_exit);
+
+        button_pause.setTranslateX(1100);
+        button_pause.setTranslateY(350);
+        button_pause.setMinWidth(130);
+        button_pause.setMinHeight(20);
+
+        root.getChildren().add(button_pause);
+        // sliders section
+
+
+        // balls_amount slider
+        pair_am_lab.setLabelFor(pair_am_sl);
+        pair_am_lab.setTranslateX(1150);
+        pair_am_lab.setTranslateY(75);
+        pair_am_lab.setFont(new Font(22));
+
+        pair_am_sl.setMin(1);
+        pair_am_sl.setMax(100);
+        pair_am_sl.setValue(1);
+        pair_am_sl.setShowTickLabels(true);
+        pair_am_sl.setMajorTickUnit(10);
+
+        pair_am_sl.setTranslateX(1100);
+        pair_am_sl.setTranslateY(100);
+        pair_am_sl.setMinWidth(275);
+        pair_am_sl.setMinHeight(40);
+
+        root.getChildren().add(pair_am_sl);
+        root.getChildren().add(pair_am_lab);
+
+        //init x speed boost
+        init_speed_sl.setMin(1);
+        init_speed_sl.setMax(20);
+        init_speed_sl.setValue(3);
+        init_speed_sl.setShowTickLabels(true);
+        init_speed_sl.setMajorTickUnit(5);
+
+        init_speed_sl.setTranslateX(1100);
+        init_speed_sl.setTranslateY(170);
+        init_speed_sl.setMinWidth(275);
+        init_speed_sl.setMinHeight(40);
+
+        init_speed_lab.setLabelFor(init_speed_sl);
+        init_speed_lab.setTranslateX(1125);
+        init_speed_lab.setTranslateY(145);
+        init_speed_lab.setFont(new Font(22));
+
+        root.getChildren().add(init_speed_sl);
+        root.getChildren().add(init_speed_lab);
+
+        // curve_radius slider
+        curve_rad_sl.setMin(-300);
+        curve_rad_sl.setMax(300);
+        curve_rad_sl.setValue(100);
+        curve_rad_sl.setShowTickLabels(true);
+
+        curve_rad_sl.setTranslateX(1100);
+        curve_rad_sl.setTranslateY(240);
+        curve_rad_sl.setMinWidth(275);
+        curve_rad_sl.setMaxWidth(275);
+        curve_rad_sl.setMinHeight(40);
+
+        curve_rad_lab.setLabelFor(curve_rad_sl);
+        curve_rad_lab.setTranslateX(1125);
+        curve_rad_lab.setTranslateY(215);
+        curve_rad_lab.setFont(new Font(22));
+
+        root.getChildren().add(curve_rad_sl);
+        root.getChildren().add(curve_rad_lab);
+
+        // wall_speed slider
+        wall_speed_sl.setMin(0);
+        wall_speed_sl.setMax(10);
+        wall_speed_sl.setValue(1);
+        wall_speed_sl.setShowTickLabels(true);
+        wall_speed_sl.setMajorTickUnit(5);
+
+        wall_speed_sl.setTranslateX(1100);
+        wall_speed_sl.setTranslateY(310);
+        wall_speed_sl.setMinWidth(275);
+        wall_speed_sl.setMinHeight(40);
+
+        wall_speed_lab.setLabelFor(wall_speed_sl);
+        wall_speed_lab.setTranslateX(1125);
+        wall_speed_lab.setTranslateY(285);
+        wall_speed_lab.setFont(new Font(22));
+
+        root.getChildren().add(wall_speed_sl);
+        root.getChildren().add(wall_speed_lab);
+
 
         AnimationTimer timer = new AnimationTimer() {
             @Override
@@ -121,14 +266,51 @@ public class Main extends Application {
         return root;
     }
 
-    private List<Ball> all_balls = List.of(ball1, ball2, ball3);
+    private ArrayList<Ball[]> all_balls = new ArrayList();
+    private ArrayList<Line> all_links = new ArrayList();
 
-    private ArrayList distantion = new ArrayList();
+    // adding pair into the scene
+    private void addPair() {
+        Random rand = new Random();
 
+        double angle1 = 20 * rand.nextDouble() - 10;
+        double angle2 = 20 * rand.nextDouble() - 10;
+        double abs_speed1 = rand.nextDouble();
+
+        double x_s_1 = abs_speed1 * Math.cos(Math.toRadians(angle1)) + 3;
+        double y_s_1 = abs_speed1 * Math.sin(Math.toRadians(angle1));
+
+        double x_s_2 = abs_speed1 * Math.cos(Math.toRadians(angle2)) + 3;
+        double y_s_2 = abs_speed1 * Math.sin(Math.toRadians(angle2));
+
+        double red = rand.nextDouble(), green = rand.nextDouble(), blue = rand.nextDouble();
+
+        Ball ball1 = new Ball(ball_start_x, ball_start_y, ball_rad, x_s_1, y_s_1, Color.color(red, green, blue), ball_num);
+        ball_num ++;
+        Ball ball2 = new Ball(ball_start_x, ball_start_y, ball_rad, x_s_2, y_s_2, Color.color(red, green, blue), ball_num);
+        ball_num ++;
+
+        root.getChildren().add(ball1);
+        root.getChildren().add(ball2);
+
+        Ball[] new_pair = new Ball[2];
+
+        new_pair[0] = ball1;
+        new_pair[1] = ball2;
+
+        all_balls.add(new_pair);
+
+        Line linker = new Line(ball_start_x, ball_start_y, ball_start_x, ball_start_y);
+        linker.setStroke(Color.color(red, green, blue));
+
+        all_links.add(linker);
+
+        root.getChildren().add(linker);
+
+    }
+
+    // loop function
     private void update() {
-
-        double[] x_coords = new double[2];
-        double[] y_coords = new double[2];
 
         //moving the walls
         // setting bot limit of x to 50, top limit to 150
@@ -147,85 +329,128 @@ public class Main extends Application {
 
 
         //collision of ball:
-        all_balls.forEach(s -> {
+        all_balls.forEach(pair -> {
 
-            Bounds boundsInScene = s.localToScene(s.getBoundsInLocal());
+            int pos = all_balls.indexOf(pair);
 
-            double min_x = boundsInScene.getMinX();
-            double min_y = boundsInScene.getMinY();
-            double max_x = boundsInScene.getMaxX();
-            double max_y = boundsInScene.getMaxY();
+            double[] x_coords = new double[2];
+            double[] y_coords = new double[2];
 
-            double x = (min_x + max_x) / 2;
-            double y = (min_y + max_y) / 2;
+            for (int i = 0; i < 2; i++) {
 
-            if (s.getBoundsInParent().intersects(line1.getBoundsInParent())) {
-                s.Bump_left(wall_speed);
-            }
+                Ball s = pair[i];
 
-            if (s.getBoundsInParent().intersects(line2.getBoundsInParent())) {
-                s.Bump_top_bot();
-            }
+                Bounds boundsInScene = s.localToScene(s.getBoundsInLocal());
 
-            if (s.getBoundsInParent().intersects(line3.getBoundsInParent())) {
-                s.Bump_top_bot();
-            }
+                double min_x = boundsInScene.getMinX();
+                double min_y = boundsInScene.getMinY();
+                double max_x = boundsInScene.getMaxX();
+                double max_y = boundsInScene.getMaxY();
+
+                double x = (min_x + max_x) / 2;
+                double y = (min_y + max_y) / 2;
+
+                if (s.getBoundsInParent().intersects(line1.getBoundsInParent())) {
+                    s.Bump_left(wall_speed);
+                }
+
+                if (s.getBoundsInParent().intersects(line2.getBoundsInParent())) {
+                    s.Bump_top_bot();
+                }
+
+                if (s.getBoundsInParent().intersects(line3.getBoundsInParent())) {
+                    s.Bump_top_bot();
+                }
 
 
-            // it must work another way, but for now it'd be fine
-            if (rad_x >= 0) {
-                // external shape
-                if (max_x >= r_lim) {
-                    if (ellipsis(x, y) && s.timer < 1) {
-                        s.timer = 2;
-                        s.bumpArc(x, y, r_lim, cent_y, rad_x, rad_y); // в тесте соотношение координат работает как-то так
+                // it must work another way, but for now it'd be fine
+                if (rad_x >= 0) {
+                    // external shape
+                    if (max_x >= r_lim) {
+                        if (ellipsis(x, y) && s.timer < 1) {
+                            s.timer = 2;
+                            s.bumpArc(x, y, r_lim, cent_y, rad_x, rad_y); // в тесте соотношение координат работает как-то так
+                        }
+
                     }
+                } else {
+                    // internal shape
+                    if (max_x >= r_lim + rad_x - ball_rad) {
+                        if (!ellipsis(x, y) && s.timer < 1) {
+                            s.timer = 2;
+                            s.inner_bumpArc(x, y, r_lim, cent_y, rad_x, rad_y);
+                        }
+                    }
+                }
+                s.timer -= 1;
+
+                if (y < t_lim + ball_rad && s.speed_y < 0) {
+                    s.speed_y *= -1;
+                }
+
+                if (y > b_lim - ball_rad && s.speed_y > 0) {
+                    s.speed_y *= -1;
+                }
+
+                s.move();
+
+                Bounds bound2;
+
+                boolean flag = true;
+
+                while (flag) {
+                    bound2 = s.localToScene(s.getBoundsInLocal());
+
+                    min_x = bound2.getMinX();
+                    min_y = bound2.getMinY();
+                    max_x = bound2.getMaxX();
+                    max_y = bound2.getMaxY();
+                    if (min_x >= l_lim - 1 && min_y >= t_lim - 1 && max_y <= b_lim + 1)
+                        flag = false;
+
+                    if (min_x < l_lim - 1) {
+                        s.shiftRight();
+
+                    }
+                    if (min_y < t_lim - 1)
+                        s.shiftBot();
+
+                    if (max_y > b_lim + 1)
+                        s.shiftTop();
+
 
                 }
-            } else {
-                // internal shape
-                if (max_x >= r_lim + rad_x - ball_rad) {
-                    if (!ellipsis(x, y) && s.timer < 1) {
-                        s.timer = 2;
-                        s.inner_bumpArc(x, y, r_lim, cent_y, rad_x, rad_y);
-                    }
-                }
-            }
-            s.timer -= 1;
 
-            if (y < t_lim + ball_rad && s.speed_y < 0) {
-                s.speed_y *= -1;
+
+
+                bound2 = s.localToScene(s.getBoundsInLocal());
+
+                x_coords[s.number % 2] = (bound2.getMaxX() + bound2.getMinX()) / 2;
+                y_coords[s.number % 2] = (bound2.getMaxY() + bound2.getMinY()) / 2;
+
             }
 
-            if (y > b_lim - ball_rad && s.speed_y > 0) {
-                s.speed_y *= -1;
-            }
+            all_links.get(pos).setStartX(x_coords[0]);
+            all_links.get(pos).setEndX(x_coords[1]);
+            all_links.get(pos).setStartY(y_coords[0]);
+            all_links.get(pos).setEndY(y_coords[1]);
 
-            s.move();
-
-            Bounds bound2 = s.localToScene(s.getBoundsInLocal());
-
-            if (s.number < 2) {
-                x_coords[s.number] = (bound2.getMaxX() + bound2.getMinX()) / 2;
-                y_coords[s.number] = (bound2.getMaxY() + bound2.getMinY()) / 2;
-            }
 
         });
 
-        line_link.setStartX(x_coords[0]);
-        line_link.setEndX(x_coords[1]);
-        line_link.setStartY(y_coords[0]);
-        line_link.setEndY(y_coords[1]);
-
-        double dist = Math.sqrt(Math.pow(x_coords[1] - x_coords[0], 2) + Math.pow(y_coords[1] - y_coords[0], 2));
-        distantion.add(dist);
+        pair_am_lab.setText("Число пар: " + Math.round(pair_am_sl.getValue()));
+        init_speed_lab.setText("Начальная скорость: " + Math.round(init_speed_sl.getValue()));
+        curve_rad_lab.setText("Радиус дуги: " + Math.round(curve_rad_sl.getValue()));
+        wall_speed_lab.setText("Скорость стенки: " + Math.round(wall_speed_sl.getValue()));
     }
 
+    // just supportive function
     private boolean ellipsis(double x, double y) {
         double value = Math.pow((x - r_lim), 2)/Math.pow(rad_x - ball_rad, 2) + Math.pow((y - cent_y), 2)/Math.pow(rad_y - ball_rad, 2);
         return value >= 1;
     }
 
+    // ball class, contains collision logic
     private static class Ball extends Circle {
         double speed_x, speed_y;
         int timer;
@@ -256,18 +481,16 @@ public class Main extends Application {
         }
 
         void move() {
+            double abs_sp = absSpeed();
+            if (abs_sp > 30) {
+                this.speed_x *= 30/abs_sp;
+                this.speed_y *= 30/abs_sp;
+            }
             moveX();
             moveY();
         }
 
         void Bump_left(double wall_speed) {
-            /*
-            System.out.print(speed_x);
-            System.out.print(' ');
-            System.out.print(wall_speed);
-            System.out.print('\n');
-
-             */
             if (this.speed_x > 0) {
                 this.speed_x += wall_speed;
             } else {
@@ -355,7 +578,7 @@ public class Main extends Application {
                 System.out.print('e');
                 dir += 25;
             }
-            
+
              */
 
 
@@ -492,15 +715,42 @@ public class Main extends Application {
             System.out.print(new_angle);
             System.out.print('\n');
 
+        }
 
-
+        void shiftTop() {
+            setTranslateY(getTranslateY() - 1);
+        }
+        void shiftBot() {
+            setTranslateY(getTranslateY() + 1);
+        }
+        void shiftLeft() {
+            setTranslateX(getTranslateX() - 1);
+        }
+        void shiftRight() {
+            setTranslateX(getTranslateX() + 1);
         }
 
     }
 
     @Override
     public void start(Stage stage) throws Exception{
-        Scene scene = new Scene(createContent(), 1200, 900);
+        Scene scene = new Scene(createContent());
+
+        button_exit.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                stage.close();
+            }
+        });
+
+        Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
+
+        stage.setX(primaryScreenBounds.getMinX());
+        stage.setY(primaryScreenBounds.getMinY());
+        stage.setWidth(primaryScreenBounds.getWidth());
+        stage.setHeight(primaryScreenBounds.getHeight());
+
+        stage.setResizable(false);
 
         stage.setScene(scene);
         stage.show();
