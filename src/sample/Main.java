@@ -35,6 +35,7 @@ public class Main extends Application {
     private int ball_start_x  = 150;
     private int ball_start_y = 150;
     private int ball_num = 0;
+    private double init_speed = 3;
 
     // adding globally used sliders and labels
     private Label pair_am_lab = new Label();
@@ -51,12 +52,16 @@ public class Main extends Application {
 
     // adding globally used buttons (a.k.a. exit button)
 
-    private Button button_back = new Button("Add Pair");
+    private Button button_a_pair = new Button("Add Pair");
+
     private Button button_exit = new Button("Выход");
     private Button button_pause = new Button("Пауза");
-    private Button button_start = new Button("Запуск");
+    private Button button_start = new Button("Перезапуск");
+    private Button button_rerun = new Button("Продолжить");
+    private Button button_back = new Button("Назад");
 
     // variables of active zone size
+    private double base_l_lim = 100;
     private double l_lim = 100;
     private double r_lim = 700;
     private double t_lim = 100;
@@ -67,7 +72,7 @@ public class Main extends Application {
     private int ball_rad = 10;
 
     // speed of left wall
-    private double wall_speed = 10;
+    private double wall_speed = 1;
 
     // Y position and Y rad of arc
     private double cent_y = (b_lim + t_lim) / 2;
@@ -140,23 +145,25 @@ public class Main extends Application {
 
         // buttons section
 
+        //back
         // coordinates of top left corner (i guess) and pref size
-        button_back.setTranslateX(20);
-        button_back.setTranslateY(20);
+        button_a_pair.setTranslateX(20);
+        button_a_pair.setTranslateY(20);
         // sizes
-        button_back.setMinWidth(100);
-        button_back.setMinHeight(10);
+        button_a_pair.setMinWidth(100);
+        button_a_pair.setMinHeight(10);
 
         // action when button is pressed
-        button_back.setOnAction(new EventHandler<ActionEvent>() {
+        button_a_pair.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent actionEvent) {
                 addPair();
             }
         });
 
-        root.getChildren().add(button_back);
+        root.getChildren().add(button_a_pair);
 
+        //exit
         button_exit.setTranslateX(120);
         button_exit.setTranslateY(20);
         button_exit.setMinWidth(100);
@@ -164,12 +171,44 @@ public class Main extends Application {
 
         root.getChildren().add(button_exit);
 
-        button_pause.setTranslateX(1100);
+        // pause
+        button_pause.setTranslateX(1235);
         button_pause.setTranslateY(350);
         button_pause.setMinWidth(130);
         button_pause.setMinHeight(20);
 
         root.getChildren().add(button_pause);
+
+        button_start.setTranslateX(1100);
+        button_start.setTranslateY(350);
+        button_start.setMinWidth(130);
+        button_start.setMinHeight(20);
+
+        button_start.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                buttonStartAction();
+            }
+        });
+
+        root.getChildren().add(button_start);
+
+        // re-running program without restarting it
+        button_rerun.setTranslateX(1100);
+        button_rerun.setTranslateY(380);
+        button_rerun.setMinWidth(130);
+        button_rerun.setMinHeight(20);
+
+        root.getChildren().add(button_rerun);
+
+        //pushing back from this frame
+        button_back.setTranslateX(1235);
+        button_back.setTranslateY(380);
+        button_back.setMinWidth(130);
+        button_back.setMinHeight(20);
+
+        root.getChildren().add(button_back);
+
         // sliders section
 
 
@@ -266,6 +305,50 @@ public class Main extends Application {
         return root;
     }
 
+    private void buttonStartAction() {
+        l_lim = base_l_lim;
+
+        double pair_am = Math.round(pair_am_sl.getValue());
+        wall_speed = Math.round(wall_speed_sl.getValue());
+        double new_rad_x = Math.round(curve_rad_sl.getValue());
+        init_speed = Math.round(init_speed_sl.getValue());
+
+        all_balls.forEach(s -> {
+            root.getChildren().remove(s[0]);
+            root.getChildren().remove(s[1]);
+        });
+
+        all_links.forEach(s -> {
+            root.getChildren().remove(s);
+        });
+
+        all_balls.clear();
+        all_links.clear();
+
+        line1.setStartX(l_lim);
+        line1.setEndX(l_lim);
+
+        line2.setStartX(l_lim);
+        line3.setStartX(l_lim);
+
+        if (new_rad_x * rad_x < 0) {
+            double lim_1 = start.getY();
+            double lim_2 = finish.getY();
+            start.setY(lim_2);
+            finish.setY(lim_1);
+        }
+        finish.setRadiusX(Math.abs(new_rad_x));
+        rad_x = new_rad_x;
+
+        ball_num = 0;
+
+        while(pair_am > 0) {
+            addPair();
+            pair_am --;
+        }
+
+    }
+
     private ArrayList<Ball[]> all_balls = new ArrayList();
     private ArrayList<Line> all_links = new ArrayList();
 
@@ -277,10 +360,10 @@ public class Main extends Application {
         double angle2 = 20 * rand.nextDouble() - 10;
         double abs_speed1 = rand.nextDouble();
 
-        double x_s_1 = abs_speed1 * Math.cos(Math.toRadians(angle1)) + 3;
+        double x_s_1 = abs_speed1 * Math.cos(Math.toRadians(angle1)) + init_speed;
         double y_s_1 = abs_speed1 * Math.sin(Math.toRadians(angle1));
 
-        double x_s_2 = abs_speed1 * Math.cos(Math.toRadians(angle2)) + 3;
+        double x_s_2 = abs_speed1 * Math.cos(Math.toRadians(angle2)) + init_speed;
         double y_s_2 = abs_speed1 * Math.sin(Math.toRadians(angle2));
 
         double red = rand.nextDouble(), green = rand.nextDouble(), blue = rand.nextDouble();
