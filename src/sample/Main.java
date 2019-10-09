@@ -38,15 +38,23 @@ public class Main extends Application {
 
     private Pane root = new Pane();
 
-    private CategoryAxis dist_axis = new CategoryAxis();
+    // LineChart - диаграмма зависимости расстояния от времени
+
+    private NumberAxis time_axis = new NumberAxis();
+    private NumberAxis dist_axis = new NumberAxis();
+    private LineChart<Number, Number> lineChart =
+            new LineChart<Number, Number>(time_axis, dist_axis);
+
+    private XYChart.Series<Number, Number> series = new XYChart.Series<Number, Number>();
+
+    // BarChart - гистограмма, показывающая для различных расстояний, сколько времени элементы были на этом расстоянии
+
+    private CategoryAxis Cat_dist_axis = new CategoryAxis();
     private NumberAxis amount_axis = new NumberAxis();
     private BarChart<String, Number> barChart =
-            new BarChart<String, Number>(dist_axis, amount_axis);
+            new BarChart<String, Number>(Cat_dist_axis, amount_axis);
     private XYChart.Series<String, Number> series1 = new XYChart.Series<String, Number>();
-
-
-
-
+    
     // spawn position for new balls
 
     private int ball_start_x  = 150;
@@ -112,43 +120,30 @@ public class Main extends Application {
     // somewhy it creates with coordinates like 600x425
     // so our area is within 50, 50 - 350, 250
 
-    private int[] statistics = new int[20];
+    private int time_passed = 0;
 
-    private void modifyBarChart(float dist) {
-        if (dist > 0 && dist < 1000)
-            statistics[Math.round(dist / 50)] ++;
-
+    private void modifyLineChart(float dist) {
+        series.getData().add(new XYChart.Data<Number, Number>(time_passed, dist));
     }
 
     // creates init scene
     private Parent createContent() {
 
-        for (int i =0; i < 20; i++) {
-            statistics[i] = 0;
-        }
+        lineChart.setTranslateY(550);
+        lineChart.setMaxHeight(300);
+        lineChart.setMinHeight(300);
+        lineChart.setMinWidth(600);
+        lineChart.setMaxWidth(600);
 
-        // info_diagramm
-        barChart.setBarGap(5);
+        dist_axis.setLabel("Расстояние между объектами");
+        time_axis.setLabel("Прошедшее время");
 
-        dist_axis.setLabel("Расстояние");
-        amount_axis.setLabel("Время");
+        lineChart.setCreateSymbols(false);
 
-        series1.setName("Histogram");
+        lineChart.getData().add(series);
+        lineChart.setAnimated(false);
 
-        series1.getData().add(new XYChart.Data<String, Number>("0", statistics[0]));
-        series1.getData().add(new XYChart.Data<String, Number>("1", statistics[1]));
-        series1.getData().add(new XYChart.Data<String, Number>("2", statistics[2]));
-
-        series1.getChart();
-
-        barChart.getData().add(series1);
-        barChart.setTranslateY(550);
-        barChart.setMinWidth(800);
-        barChart.setMaxHeight(300);
-
-        barChart.setAnimated(true);
-
-        root.getChildren().add(barChart);
+        root.getChildren().add(lineChart);
 
 
         // colors of borders
@@ -351,6 +346,29 @@ public class Main extends Application {
 
         l_lim = base_l_lim;
 
+        time_passed = 0;
+        root.getChildren().remove(lineChart);
+
+        lineChart = null;
+        series = null;
+
+        lineChart = new LineChart<Number, Number>(time_axis, dist_axis);
+        series = new XYChart.Series<Number, Number>();
+
+        lineChart.setTranslateY(550);
+        lineChart.setMaxHeight(300);
+        lineChart.setMinHeight(300);
+        lineChart.setMinWidth(700);
+        lineChart.setMaxWidth(700);
+
+        lineChart.setCreateSymbols(false);
+
+        lineChart.getData().add(series);
+        lineChart.setAnimated(false);
+
+        root.getChildren().add(lineChart);
+
+
         pair_am = Math.round(pair_am_sl.getValue());
         wall_speed = Math.round(wall_speed_sl.getValue());
         double new_rad_x = Math.round(curve_rad_sl.getValue());
@@ -367,10 +385,6 @@ public class Main extends Application {
 
         all_balls.clear();
         all_links.clear();
-
-        for (int i = 0; i<20; i++) {
-            statistics[i] = 0;
-        }
 
         line1.setStartX(l_lim);
         line1.setEndX(l_lim);
@@ -389,9 +403,8 @@ public class Main extends Application {
 
         ball_num = 0;
 
-        while(pair_am > 0) {
+        for (int i = 0; i < pair_am; i++) {
             addPair();
-            pair_am --;
         }
 
     }
@@ -454,11 +467,6 @@ public class Main extends Application {
         if (!pause) {
 
             int i = 0;
-
-            for (XYChart.Data<String, Number> data : series1.getData()) {
-                data.setYValue(statistics[i]);
-                i++;
-            }
 
             this_turn_dist = 0;
             //moving the walls
@@ -711,7 +719,8 @@ public class Main extends Application {
 
             this_turn_dist /= pair_am;
 
-            modifyBarChart(this_turn_dist);
+            modifyLineChart(this_turn_dist);
+            time_passed ++;
         }
 
         pair_am_lab.setText("Число пар: " + Math.round(pair_am_sl.getValue()));
@@ -866,28 +875,6 @@ public class Main extends Application {
             double new_angle = (180 + 2 * dir - speed_angle) % 360;
             this.speed_x = abs_sp * Math.cos(Math.toRadians(new_angle));
             this.speed_y = abs_sp * Math.sin(Math.toRadians(new_angle));
-/*
-            if (y_pos > cent_y + rad_y - this.radius && this.speed_y > 0) {
-                this.speed_y *= -1;
-            }
-            if (y_pos < cent_y - rad_y + this.radius && this.speed_y < 0) {
-                this.speed_y *= -1;
-            }
-
- */
-/*
-            System.out.print(normal_vect[0]);
-            System.out.print(' ');
-            System.out.print(normal_vect[1]);
-            System.out.print(' ');
-            System.out.print(dir);
-            System.out.print(' ');
-            System.out.print(speed_angle);
-            System.out.print(' ');
-            System.out.print(new_angle);
-            System.out.print('\n');
-
- */
 
 
         }
