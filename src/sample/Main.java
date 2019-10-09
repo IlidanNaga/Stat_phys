@@ -54,7 +54,7 @@ public class Main extends Application {
     private BarChart<String, Number> barChart =
             new BarChart<String, Number>(Cat_dist_axis, amount_axis);
     private XYChart.Series<String, Number> series1 = new XYChart.Series<String, Number>();
-    
+
     // spawn position for new balls
 
     private int ball_start_x  = 150;
@@ -82,9 +82,11 @@ public class Main extends Application {
     private Slider wall_speed_sl = new Slider();
     private Label wall_speed_lab = new Label();
 
+    private Slider ball_rad_sl = new Slider();
+    private Label ball_rad_lab = new Label();
+
     // adding globally used buttons (a.k.a. exit button)
 
-    private Button button_exit = new Button("Выход");
     private Button button_pause = new Button("Пауза");
     private Button button_start = new Button("Перезапуск");
     private Button button_back = new Button("Назад");
@@ -111,6 +113,7 @@ public class Main extends Application {
     private Line line1 = new Line(l_lim, t_lim, l_lim, b_lim); // left
     private Line line2 = new Line(l_lim, t_lim, r_lim, t_lim); // top
     private Line line3 = new Line(l_lim, b_lim, r_lim, b_lim); // bot
+    private Line line4 = new Line(r_lim, t_lim, r_lim, b_lim);
 
     // pre-set for arc
     private MoveTo start = new MoveTo();
@@ -121,24 +124,83 @@ public class Main extends Application {
     // so our area is within 50, 50 - 350, 250
 
     private int time_passed = 0;
-
     private void modifyLineChart(float dist) {
         series.getData().add(new XYChart.Data<Number, Number>(time_passed, dist));
+    }
+
+    private int[] statistics = new int[20];
+    private void modifyBarChart(float dist) {
+        if (dist > 0 && dist < 1000) {
+            statistics[Math.round(dist / 50)] ++;
+        }
     }
 
     // creates init scene
     private Parent createContent() {
 
+        // working with barChart item
+
+        for (int i = 0; i < 20; i++) {
+            statistics[i] = 0;
+        }
+
+        barChart.setTranslateY(550);
+        barChart.setTranslateX(675);
+        barChart.setMinHeight(300);
+        barChart.setMaxHeight(300);
+        barChart.setMinWidth(750);
+        barChart.setMaxWidth(750);
+
+        Cat_dist_axis.setLabel("Расстояние между объектами");
+        amount_axis.setLabel("Время на данном расстоянии");
+        Cat_dist_axis.setVisible(true);
+        Cat_dist_axis.setTickLabelsVisible(true);
+
+        amount_axis.setForceZeroInRange(true);
+
+        // adding columns
+        series1.getData().add(new XYChart.Data<String, Number>("0-50", statistics[0]));
+        series1.getData().add(new XYChart.Data<String, Number>("50-100", statistics[1]));
+        series1.getData().add(new XYChart.Data<String, Number>("100-150", statistics[2]));
+        series1.getData().add(new XYChart.Data<String, Number>("150-200", statistics[3]));
+        series1.getData().add(new XYChart.Data<String, Number>("200-250", statistics[4]));
+        series1.getData().add(new XYChart.Data<String, Number>("250-300", statistics[5]));
+        series1.getData().add(new XYChart.Data<String, Number>("300-350", statistics[6]));
+        series1.getData().add(new XYChart.Data<String, Number>("350-400", statistics[7]));
+        series1.getData().add(new XYChart.Data<String, Number>("400-450", statistics[8]));
+        series1.getData().add(new XYChart.Data<String, Number>("450-500", statistics[9]));
+        series1.getData().add(new XYChart.Data<String, Number>("500-550", statistics[10]));
+        series1.getData().add(new XYChart.Data<String, Number>("550-600", statistics[11]));
+        //series1.getData().add(new XYChart.Data<String, Number>("600-650", statistics[12]));
+        //series1.getData().add(new XYChart.Data<String, Number>("650-700", statistics[13]));
+        //series1.getData().add(new XYChart.Data<String, Number>("700-750", statistics[14]));
+        //series1.getData().add(new XYChart.Data<String, Number>("750-800", statistics[15]));
+        //series1.getData().add(new XYChart.Data<String, Number>("800-850", statistics[16]));
+        //series1.getData().add(new XYChart.Data<String, Number>("850-900", statistics[17]));
+        //series1.getData().add(new XYChart.Data<String, Number>("900-950", statistics[18]));
+        //series1.getData().add(new XYChart.Data<String, Number>("950-1000", statistics[19]));
+
+        barChart.getData().add(series1);
+
+        barChart.setLegendVisible(false);
+        barChart.setAnimated(false);
+
+        root.getChildren().add(barChart);
+
+
+        // working with lineChart item
+
         lineChart.setTranslateY(550);
         lineChart.setMaxHeight(300);
         lineChart.setMinHeight(300);
-        lineChart.setMinWidth(600);
-        lineChart.setMaxWidth(600);
+        lineChart.setMinWidth(700);
+        lineChart.setMaxWidth(700);
 
         dist_axis.setLabel("Расстояние между объектами");
         time_axis.setLabel("Прошедшее время");
 
         lineChart.setCreateSymbols(false);
+        lineChart.setLegendVisible(false);
 
         lineChart.getData().add(series);
         lineChart.setAnimated(false);
@@ -150,6 +212,7 @@ public class Main extends Application {
         line1.setStroke(Color.BLUE);
         line2.setStroke(Color.BLUE);
         line3.setStroke(Color.BLUE);
+        line4.setStroke(Color.BLUE);
         arc.setStroke(Color.BLUE);
 
         // setting borders
@@ -198,10 +261,10 @@ public class Main extends Application {
 
         // buttons section
         // pause
-        button_pause.setTranslateX(1235);
-        button_pause.setTranslateY(350);
-        button_pause.setMinWidth(130);
-        button_pause.setMinHeight(20);
+        button_pause.setTranslateX(1100);
+        button_pause.setTranslateY(430);
+        button_pause.setMinWidth(270);
+        button_pause.setMinHeight(25);
 
         button_pause.setOnAction(new EventHandler<ActionEvent>() {
             @Override
@@ -213,9 +276,9 @@ public class Main extends Application {
         root.getChildren().add(button_pause);
 
         button_start.setTranslateX(1100);
-        button_start.setTranslateY(350);
-        button_start.setMinWidth(130);
-        button_start.setMinHeight(20);
+        button_start.setTranslateY(465);
+        button_start.setMinWidth(270);
+        button_start.setMinHeight(25);
 
         button_start.setOnAction(new EventHandler<ActionEvent>() {
             @Override
@@ -226,19 +289,11 @@ public class Main extends Application {
 
         root.getChildren().add(button_start);
 
-        // exit
-        button_exit.setTranslateX(1100);
-        button_exit.setTranslateY(380);
-        button_exit.setMinWidth(130);
-        button_exit.setMinHeight(20);
-
-        root.getChildren().add(button_exit);
-
         //pushing back from this frame
-        button_back.setTranslateX(1235);
-        button_back.setTranslateY(380);
-        button_back.setMinWidth(130);
-        button_back.setMinHeight(20);
+        button_back.setTranslateX(20);
+        button_back.setTranslateY(20);
+        button_back.setMinWidth(150);
+        button_back.setMinHeight(25);
 
         root.getChildren().add(button_back);
 
@@ -325,6 +380,28 @@ public class Main extends Application {
         root.getChildren().add(wall_speed_sl);
         root.getChildren().add(wall_speed_lab);
 
+        //ball_rad slider
+
+        ball_rad_sl.setMin(5);
+        ball_rad_sl.setMax(30);
+        ball_rad_sl.setValue(10);
+        ball_rad_sl.setShowTickLabels(true);
+        ball_rad_sl.setMajorTickUnit(5);
+
+        ball_rad_sl.setTranslateX(1100);
+        ball_rad_sl.setTranslateY(380);
+        ball_rad_sl.setMinWidth(275);
+        ball_rad_sl.setMinHeight(40);
+
+        ball_rad_lab.setLabelFor(ball_rad_sl);
+        ball_rad_lab.setTranslateX(1125);
+        ball_rad_lab.setTranslateY(355);
+        ball_rad_lab.setFont(new Font(22));
+
+        root.getChildren().add(ball_rad_sl);
+        root.getChildren().add(ball_rad_lab);
+
+
 
         AnimationTimer timer = new AnimationTimer() {
             @Override
@@ -346,6 +423,10 @@ public class Main extends Application {
 
         l_lim = base_l_lim;
 
+        ball_rad = Math.round((float)ball_rad_sl.getValue());
+
+        // renewing lineChart
+
         time_passed = 0;
         root.getChildren().remove(lineChart);
 
@@ -362,12 +443,26 @@ public class Main extends Application {
         lineChart.setMaxWidth(700);
 
         lineChart.setCreateSymbols(false);
+        lineChart.setLegendVisible(false);
 
         lineChart.getData().add(series);
         lineChart.setAnimated(false);
 
         root.getChildren().add(lineChart);
 
+        // renewing barChart
+
+        for (int ii = 0; ii < 20; ii++) {
+            statistics[ii] = 0;
+        }
+        int j = 0;
+
+        for (XYChart.Data<String, Number> data : series1.getData()) {
+            data.setYValue(statistics[j]);
+            j++;
+        }
+
+        // renewing everything else
 
         pair_am = Math.round(pair_am_sl.getValue());
         wall_speed = Math.round(wall_speed_sl.getValue());
@@ -392,14 +487,29 @@ public class Main extends Application {
         line2.setStartX(l_lim);
         line3.setStartX(l_lim);
 
-        if (new_rad_x * rad_x < 0) {
+        if (rad_x != 0) {
+            root.getChildren().remove(arc);
+        } else
+            root.getChildren().remove(line4);
+
+        if (new_rad_x * finish.getRadiusX() < 0) {
             double lim_1 = start.getY();
             double lim_2 = finish.getY();
             start.setY(lim_2);
             finish.setY(lim_1);
+            finish.setRadiusX(new_rad_x);
+        } else if (new_rad_x * finish.getRadiusX() > 0) {
+            finish.setRadiusX(new_rad_x);
         }
-        finish.setRadiusX(Math.abs(new_rad_x));
+
         rad_x = new_rad_x;
+
+        if (rad_x != 0) {
+            root.getChildren().add(arc);
+        } else {
+            root.getChildren().add(line4);
+        }
+
 
         ball_num = 0;
 
@@ -504,16 +614,16 @@ public class Main extends Application {
                     double x = (min_x + max_x) / 2;
                     double y = (min_y + max_y) / 2;
 
-                    double rel_speed_x = s.speed_x / s.absSpeed();
-                    double rel_speed_y = s.speed_y / s.absSpeed();
+                    boolean positive_curve_flag = false;
+                    boolean curved = true;
+                    boolean bumped_left = false;
 
                     if (s.getBoundsInParent().intersects(line1.getBoundsInParent())) {
                         s.Bump_left(wall_speed);
+                        bumped_left = true;
                     }
 
-                    boolean positive_curve_flag;
-
-                    if (rad_x >= 0) {
+                    if (rad_x > 0) {
 
                         positive_curve_flag = true;
 
@@ -533,7 +643,7 @@ public class Main extends Application {
                             }
 
                         }
-                    } else {
+                    } else if (rad_x < 0){
 
                         double maxX = maximalX();
                         positive_curve_flag = false;
@@ -558,6 +668,11 @@ public class Main extends Application {
                                 }
                             }
                         }
+                    } else {
+                        curved = false;
+                        if (max_x >= r_lim) {
+                            s.Bump_right();
+                        }
                     }
                     s.timer -= 1;
 
@@ -571,10 +686,31 @@ public class Main extends Application {
 
                     s.move();
 
-                    Bounds bound2;
+
+                    Bounds bound2 = s.localToScene(s.getBoundsInLocal());
 
                     boolean flag = true;
 
+                    // обработчик левой стенки
+                    if (s.speed_x < 0) {
+
+                        if (bound2.getMinX() <= l_lim + wall_speed) {
+                            // значит на следующем шаге он столкнется, надо этому не помешать
+                            if (wall_speed >= 0) {
+                                // позиция шарика по x до следующего просчета столкновений не изменится, так что можем его сдвинуть
+                                if (l_lim > bound2.getMinX())
+                                    s.shiftSpecRight(l_lim - bound2.getMinX());
+                            } else {
+                                double lim = l_lim + wall_speed - bound2.getMinX() - 1;
+                                s.shiftSpecRight(lim);
+                            }
+                        } else {
+                            // значит на следующем шаге он не столкнется
+
+                        }
+                    }
+
+                    //  обработчик коллизии верхней\нижней стенок
                     while (flag) {
                         bound2 = s.localToScene(s.getBoundsInLocal());
 
@@ -582,13 +718,10 @@ public class Main extends Application {
                         min_y = bound2.getMinY();
                         max_x = bound2.getMaxX();
                         max_y = bound2.getMaxY();
-                        if (min_x >= l_lim - ball_rad / 2 && min_y >= t_lim - 1 && max_y <= b_lim + 1)
+
+                        if (min_y >= t_lim - 1 && max_y <= b_lim + 1)
                             flag = false;
 
-                        if (min_x < l_lim - ball_rad / 2) {
-                            s.shiftRight();
-
-                        }
                         if (min_y < t_lim - 1)
                             s.shiftBot();
 
@@ -596,95 +729,108 @@ public class Main extends Application {
                             s.shiftTop();
 
                     }
-                    if (positive_curve_flag)
-                        while (positive_curve_flag) {
-                            bound2 = s.localToScene(s.getBoundsInLocal());
+                    if (curved) {
+                        if (positive_curve_flag)
+                            while (positive_curve_flag) {
+                                bound2 = s.localToScene(s.getBoundsInLocal());
 
-                            min_x = bound2.getMinX();
-                            min_y = bound2.getMinY();
-                            max_x = bound2.getMaxX();
-                            max_y = bound2.getMaxY();
+                                min_x = bound2.getMinX();
+                                min_y = bound2.getMinY();
+                                max_x = bound2.getMaxX();
+                                max_y = bound2.getMaxY();
 
-                            if (max_x < r_lim)
-                                break;
+                                if (max_x < r_lim)
+                                    break;
 
-                            // coordinates of ball centre
-                            x = (min_x + max_x) / 2;
-                            y = (min_y + max_y) / 2;
+                                // coordinates of ball centre
+                                x = (min_x + max_x) / 2;
+                                y = (min_y + max_y) / 2;
 
-                            double t = 0;
-                            double dt = Math.PI / 4;
-                            double point_x, point_y;
-                            boolean intersects = false;
+                                double t = 0;
+                                double dt = Math.PI / 4;
+                                double point_x, point_y;
+                                boolean intersects = false;
 
-                            while (t <= 2 * Math.PI) {
+                                while (t <= 2 * Math.PI) {
 
-                                point_x = x + ball_rad * Math.cos(t);
-                                point_y = y + ball_rad * Math.sin(t);
+                                    point_x = x + ball_rad * Math.cos(t);
+                                    point_y = y + ball_rad * Math.sin(t);
 
-                                intersects = intersects || arc_collision(point_x, point_y);
+                                    intersects = intersects || arc_collision(point_x, point_y);
 
-                                t += dt;
-                            }
-
-                            if (intersects) {
-                                s.shiftLeft();
-                                if (y > cent_y) {
-                                    s.shiftTop();
+                                    t += dt;
                                 }
-                                if (y < cent_y) {
-                                    s.shiftBot();
-                                }
-                            } else {
-                                positive_curve_flag = false;
-                            }
 
+                                if (intersects) {
+                                    s.shiftLeft();
+                                    if (y > cent_y) {
+                                        s.shiftTop();
+                                    }
+                                    if (y < cent_y) {
+                                        s.shiftBot();
+                                    }
+                                } else {
+                                    positive_curve_flag = false;
+                                }
+
+                            }
+                        else {
+                            positive_curve_flag = true;
+                            while (positive_curve_flag) {
+                                bound2 = s.localToScene(s.getBoundsInLocal());
+
+                                min_x = bound2.getMinX();
+                                min_y = bound2.getMinY();
+                                max_x = bound2.getMaxX();
+                                max_y = bound2.getMaxY();
+
+                                if (max_x < r_lim + rad_x)
+                                    break;
+
+                                // coordinates of ball centre
+                                x = (min_x + max_x) / 2;
+                                y = (min_y + max_y) / 2;
+
+                                double t = 0;
+                                double dt = Math.PI / 4;
+                                double point_x, point_y;
+                                boolean intersects = false;
+
+                                while (t <= 2 * Math.PI) {
+
+                                    point_x = x + ball_rad * Math.cos(t);
+                                    point_y = y + ball_rad * Math.sin(t);
+
+                                    intersects = intersects || neg_arc_collision(point_x, point_y);
+
+                                    t += dt;
+                                }
+
+                                if (intersects) {
+                                    s.shiftLeft();
+                                    s.shiftLeft();
+                                    if (y > cent_y) {
+                                        s.shiftBot();
+                                    }
+                                    if (y < cent_y) {
+                                        s.shiftTop();
+                                    }
+                                } else {
+                                    positive_curve_flag = false;
+                                }
+
+                            }
                         }
-                    else {
-                        positive_curve_flag = true;
-                        while(positive_curve_flag) {
+                    } else {
+                        while (true) {
                             bound2 = s.localToScene(s.getBoundsInLocal());
 
-                            min_x = bound2.getMinX();
-                            min_y = bound2.getMinY();
                             max_x = bound2.getMaxX();
-                            max_y = bound2.getMaxY();
 
-                            if (max_x < r_lim + rad_x)
+                            if (max_x > r_lim + 1) {
+                                s.shiftLeft();
+                            } else
                                 break;
-
-                            // coordinates of ball centre
-                            x = (min_x + max_x) / 2;
-                            y = (min_y + max_y) / 2;
-
-                            double t = 0;
-                            double dt = Math.PI / 4;
-                            double point_x, point_y;
-                            boolean intersects = false;
-
-                            while (t <= 2 * Math.PI) {
-
-                                point_x = x + ball_rad * Math.cos(t);
-                                point_y = y + ball_rad * Math.sin(t);
-
-                                intersects = intersects || neg_arc_collision(point_x, point_y);
-
-                                t += dt;
-                            }
-
-                            if (intersects) {
-                                s.shiftLeft();
-                                s.shiftLeft();
-                                if (y > cent_y) {
-                                    s.shiftBot();
-                                }
-                                if (y < cent_y) {
-                                    s.shiftTop();
-                                }
-                            } else {
-                                positive_curve_flag = false;
-                            }
-
                         }
                     }
 
@@ -721,12 +867,22 @@ public class Main extends Application {
 
             modifyLineChart(this_turn_dist);
             time_passed ++;
+
+            modifyBarChart(this_turn_dist);
+
+            int j = 0;
+
+            for (XYChart.Data<String, Number> data : series1.getData()) {
+                data.setYValue(statistics[j]);
+                j++;
+            }
         }
 
         pair_am_lab.setText("Число пар: " + Math.round(pair_am_sl.getValue()));
         init_speed_lab.setText("Начальная скорость: " + Math.round(init_speed_sl.getValue()));
         curve_rad_lab.setText("Радиус дуги: " + Math.round(curve_rad_sl.getValue()));
         wall_speed_lab.setText("Скорость стенки: " + Math.round(wall_speed_sl.getValue()));
+        ball_rad_lab.setText("Радиус шаров: " + Math.round(ball_rad_sl.getValue()));
     }
 
     // just supportive function
@@ -751,7 +907,6 @@ public class Main extends Application {
         double value = Math.pow(x - r_lim, 2) / Math.pow(rad_x, 2) + Math.pow(y - cent_y, 2)/Math.pow(rad_y, 2);
         return value < 0.95;
     }
-
     private double maximalX() {
         double angle = Math.asin(1 - ball_rad/rad_y); // in radians
         return r_lim - Math.cos(angle);
@@ -787,9 +942,9 @@ public class Main extends Application {
         }
         void move() {
             double abs_sp = absSpeed();
-            if (abs_sp > 20) {
-                this.speed_x *= 20/abs_sp;
-                this.speed_y *= 20/abs_sp;
+            if (abs_sp > 22) {
+                this.speed_x *= 22/abs_sp;
+                this.speed_y *= 22/abs_sp;
             }
             moveX();
             moveY();
@@ -805,6 +960,9 @@ public class Main extends Application {
         }
         void Bump_top_bot() {
             this.speed_y *= -1;
+        }
+        void Bump_right() {
+            this.speed_x *= -1;
         }
 
         double absSpeed() {
@@ -1003,21 +1161,16 @@ public class Main extends Application {
             this.speed_y *= -1;
         }
 
+        void shiftSpecRight(double x) {
+            setTranslateX(getTranslateX() + x);
+        }
+
     }
 
     // run function
     @Override
     public void start(Stage stage) throws Exception{
         Scene scene = new Scene(createContent());
-
-        // exit button action
-        button_exit.setOnAction(new EventHandler<ActionEvent>() {
-            @Override
-            public void handle(ActionEvent actionEvent) {
-                stage.close();
-            }
-        });
-
 
         Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
 
