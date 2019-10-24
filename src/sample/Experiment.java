@@ -2,37 +2,49 @@ package sample;
 
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
-import javafx.embed.swing.SwingNode;
+import javafx.beans.binding.NumberBinding;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Bounds;
+import javafx.geometry.Insets;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.chart.*;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.*;
 import javafx.scene.text.Font;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
-import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ChartPanel;
-import org.jfree.chart.JFreeChart;
-import org.jfree.chart.plot.PlotOrientation;
-import org.jfree.data.statistics.HistogramDataset;
-import org.jfree.data.statistics.HistogramType;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 
 
-public class Main extends Application {
+
+public class Experiment extends Application {
+
+    // upscale from 1440x900 to real size
+    private Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
+
+    private double screenwidth = primaryScreenBounds.getWidth();
+    private double screenheight = primaryScreenBounds.getHeight();
+
+    private double width_upscale = screenwidth / 1440;
+    private double height_upscale = screenheight / 900;
+    private double total_upscale = (width_upscale + height_upscale) / 2;
+
+    // time value
+
+    private Date time = new Date();
+    private long start_time;
 
     // scene item
 
@@ -53,17 +65,32 @@ public class Main extends Application {
     private NumberAxis amount_axis = new NumberAxis();
     private BarChart<String, Number> barChart =
             new BarChart<String, Number>(Cat_dist_axis, amount_axis);
+
+    private CategoryAxis Cat_x_axis = new CategoryAxis();
+    private NumberAxis amount_x = new NumberAxis();
+    private BarChart<String, Number> bar_x =
+            new BarChart<String, Number>(Cat_x_axis, amount_x);
+
+    private CategoryAxis Cat_y_axis = new CategoryAxis();
+    private NumberAxis amount_y = new NumberAxis();
+    private BarChart<String, Number> bar_y =
+            new BarChart<String, Number>(Cat_y_axis, amount_y);
+
     private XYChart.Series<String, Number> series1 = new XYChart.Series<String, Number>();
+    private XYChart.Series<String, Number> series_x = new XYChart.Series<String, Number>();
+    private XYChart.Series<String, Number> series_y = new XYChart.Series<String, Number>();
 
     // spawn position for new balls
 
-    private int ball_start_x  = 150;
-    private int ball_start_y = 150;
+    private double ball_start_x  = 150 * width_upscale;
+    private double ball_start_y = 125 * height_upscale;
     private int ball_num = 0;
     private double init_speed = 3;
     private long pair_am = 1;
 
     private float this_turn_dist;
+    private float this_turn_x;
+    private float this_turn_y;
 
 
     // flag for pause/unpause
@@ -81,23 +108,33 @@ public class Main extends Application {
 
     private Slider wall_speed_sl = new Slider();
     private Label wall_speed_lab = new Label();
-
+/*
     private Slider ball_rad_sl = new Slider();
     private Label ball_rad_lab = new Label();
+
+
+ */
+
+    // adding checkboxes
+
+    private CheckBox box_hist_1 = new CheckBox("Распределение расстояний");
+    private CheckBox box_hist_2 = new CheckBox("Распределение по x");
+    private CheckBox box_hist_3 = new CheckBox("Распределение по y");
 
     // adding globally used buttons (a.k.a. exit button)
 
     private Button button_pause = new Button("Пауза");
     private Button button_start = new Button("Перезапуск");
     private Button button_back = new Button("Назад");
+    private Button button_exit = new Button("Выход");
 
     // variables of active zone size
-    private double base_l_lim = 100;
-    private double l_lim = 100;
-    private double r_lim = 700;
-    private double t_lim = 100;
-    private double b_lim = 500;
-    private double rad_x = 100;
+    private double base_l_lim = 100 * width_upscale;
+    private double l_lim = 100 * width_upscale;
+    private double r_lim = 700 * width_upscale;
+    private double t_lim = 50 * height_upscale;
+    private double b_lim = 450 * height_upscale;
+    private double rad_x = 100 * height_upscale;
 
     // united ball radius
     private int ball_rad = 10;
@@ -123,33 +160,118 @@ public class Main extends Application {
     // somewhy it creates with coordinates like 600x425
     // so our area is within 50, 50 - 350, 250
 
-    private int time_passed = 0;
+    private double time_passed = 0;
+    private int lines_amount = 0;
     private void modifyLineChart(float dist) {
+
+        if (lines_amount > 6000) {
+            series.getData().remove(0);
+        }
         series.getData().add(new XYChart.Data<Number, Number>(time_passed, dist));
+        lines_amount ++;
     }
 
-    private int[] statistics = new int[20];
-    private void modifyBarChart(float dist) {
+    private double[] statistics = new double[20];
+    private void modifyBarChart(float dist, double delta) {
         if (dist > 0 && dist < 1000) {
-            statistics[Math.round(dist / 50)] ++;
+            statistics[Math.round(dist /50)] += delta;
+        }
+    }
+
+    private double[] stat_x = new double[20];
+    private void modifyBarX(float dist, double delta) {
+        if (dist > 0 && dist < 600) {
+            stat_x[Math.round(dist / 50)] += delta;
+        }
+    }
+
+    private double[] stat_y = new double[20];
+    private void modifyBarY(float dist, double delta) {
+        if (dist > 0 && dist < 400) {
+            stat_y[Math.round(dist / 50)] += delta;
         }
     }
 
     // creates init scene
     private Parent createContent() {
 
+        // working with checkbox
+
+        box_hist_1.setTranslateX(1100 * width_upscale);
+        box_hist_1.setTranslateY(400 * height_upscale);
+        box_hist_1.setSelected(true);
+        box_hist_1.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                if (box_hist_1.isSelected()) {
+                    box_hist_2.setSelected(false);
+                    box_hist_3.setSelected(false);
+                } else {
+                    box_hist_1.setSelected(true);
+                }
+
+            }
+        });
+
+        box_hist_2.setTranslateX(1100 * width_upscale);
+        box_hist_2.setTranslateY(420 * height_upscale);
+        box_hist_2.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                if (box_hist_2.isSelected()) {
+                    box_hist_1.setSelected(false);
+                    box_hist_3.setSelected(false);
+                } else {
+                    box_hist_2.setSelected(true);
+                }
+            }
+        });
+
+        box_hist_3.setTranslateX(1100 * width_upscale);
+        box_hist_3.setTranslateY(440 * height_upscale);
+        box_hist_3.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                if (box_hist_3.isSelected()) {
+                    box_hist_1.setSelected(false);
+                    box_hist_2.setSelected(false);
+                } else {
+                    box_hist_3.setSelected(true);
+                }
+            }
+        });
+
+        root.getChildren().add(box_hist_1);
+        root.getChildren().add(box_hist_2);
+        root.getChildren().add(box_hist_3);
+
+
+
+        // working with date item
+        start_time = time.getTime();
+        System.out.print(start_time);
+
         // working with barChart item
 
         for (int i = 0; i < 20; i++) {
             statistics[i] = 0;
+            stat_x[i] = 0;
+            stat_y[i] = 0;
         }
 
-        barChart.setTranslateY(550);
-        barChart.setTranslateX(675);
-        barChart.setMinHeight(300);
-        barChart.setMaxHeight(300);
-        barChart.setMinWidth(750);
-        barChart.setMaxWidth(750);
+        barChart.setTranslateY(480 * height_upscale);
+        barChart.setTranslateX(675 * width_upscale);
+        barChart.setMinHeight(370 * height_upscale);
+        barChart.setMaxHeight(370 * height_upscale);
+        barChart.setMinWidth(750 * width_upscale);
+        barChart.setMaxWidth(750 * width_upscale);
+
+        bar_x.setTranslateY(480 * height_upscale);
+        bar_x.setTranslateX(675 * width_upscale);
+        bar_x.setMinHeight(370 * height_upscale);
+        bar_x.setMaxHeight(370 * height_upscale);
+        bar_x.setMinWidth(750 * width_upscale);
+        bar_x.setMaxWidth(750 * width_upscale);
 
         Cat_dist_axis.setLabel("Расстояние между объектами");
         amount_axis.setLabel("Время на данном расстоянии");
@@ -187,14 +309,72 @@ public class Main extends Application {
 
         root.getChildren().add(barChart);
 
+        //adding columns
+        series_x.getData().add(new XYChart.Data<String, Number>("0-50", stat_x[0]));
+        series_x.getData().add(new XYChart.Data<String, Number>("50-100", stat_x[1]));
+        series_x.getData().add(new XYChart.Data<String, Number>("100-150", stat_x[2]));
+        series_x.getData().add(new XYChart.Data<String, Number>("150-200", stat_x[3]));
+        series_x.getData().add(new XYChart.Data<String, Number>("200-250", stat_x[4]));
+        series_x.getData().add(new XYChart.Data<String, Number>("250-300", stat_x[5]));
+        series_x.getData().add(new XYChart.Data<String, Number>("300-350", stat_x[6]));
+        series_x.getData().add(new XYChart.Data<String, Number>("350-400", stat_x[7]));
+        series_x.getData().add(new XYChart.Data<String, Number>("400-450", stat_x[8]));
+        series_x.getData().add(new XYChart.Data<String, Number>("450-500", stat_x[9]));
+        series_x.getData().add(new XYChart.Data<String, Number>("500-550", stat_x[10]));
+        series_x.getData().add(new XYChart.Data<String, Number>("550-600", stat_x[11]));
+
+        bar_x.getData().add(series_x);
+        bar_x.setVisible(false);
+        bar_x.setAnimated(false);
+        Cat_x_axis.setLabel("Расстояние по оси x");
+        amount_x.setLabel("Время на этом расстоянии");
+        Cat_x_axis.setVisible(true);
+        amount_x.setVisible(true);
+
+        bar_x.setLegendVisible(false);
+        amount_x.setForceZeroInRange(true);
+
+        root.getChildren().add(bar_x);
+
+        bar_y.setTranslateY(480 * height_upscale);
+        bar_y.setTranslateX(675 * width_upscale);
+        bar_y.setMinHeight(370 * height_upscale);
+        bar_y.setMaxHeight(370 * height_upscale);
+        bar_y.setMinWidth(750 * width_upscale);
+        bar_y.setMaxWidth(750 * width_upscale);
+
+        Cat_y_axis.setLabel("Расстояние по оси y");
+        amount_y.setLabel("Время на данном расстоянии");
+        Cat_y_axis.setVisible(true);
+        Cat_y_axis.setTickLabelsVisible(true);
+
+        amount_y.setForceZeroInRange(true);
+
+        series_y.getData().add(new XYChart.Data<String, Number>("0-50", stat_y[0]));
+        series_y.getData().add(new XYChart.Data<String, Number>("50-100", stat_y[1]));
+        series_y.getData().add(new XYChart.Data<String, Number>("100-150", stat_y[2]));
+        series_y.getData().add(new XYChart.Data<String, Number>("150-200", stat_y[3]));
+        series_y.getData().add(new XYChart.Data<String, Number>("200-250", stat_y[4]));
+        series_y.getData().add(new XYChart.Data<String, Number>("250-300", stat_y[5]));
+        series_y.getData().add(new XYChart.Data<String, Number>("300-350", stat_y[6]));
+        series_y.getData().add(new XYChart.Data<String, Number>("350-400", stat_y[7]));
+
+        bar_y.getData().add(series_y);
+
+        bar_y.setLegendVisible(false);
+        bar_y.setAnimated(false);
+
+        root.getChildren().add(bar_y);
 
         // working with lineChart item
 
-        lineChart.setTranslateY(550);
-        lineChart.setMaxHeight(300);
-        lineChart.setMinHeight(300);
-        lineChart.setMinWidth(700);
-        lineChart.setMaxWidth(700);
+        lineChart.setTranslateY(480 * height_upscale);
+        lineChart.setMaxHeight(370 * height_upscale);
+        lineChart.setMinHeight(370 * height_upscale);
+        lineChart.setMinWidth(700 * width_upscale);
+        lineChart.setMaxWidth(700 * width_upscale);
+
+        //lineChart.getYAxis().setTickLabelsVisible(false);
 
         dist_axis.setLabel("Расстояние между объектами");
         time_axis.setLabel("Прошедшее время");
@@ -204,6 +384,8 @@ public class Main extends Application {
 
         lineChart.getData().add(series);
         lineChart.setAnimated(false);
+
+        time_axis.setForceZeroInRange(false);
 
         root.getChildren().add(lineChart);
 
@@ -251,20 +433,20 @@ public class Main extends Application {
 
         // borders
 
-        root.getChildren().add(new Line(25, 75, 1025, 75));
-        root.getChildren().add(new Line(25, 75, 25, 525));
-        root.getChildren().add(new Line(25, 525, 1025, 525));
-        root.getChildren().add(new Line(1025, 525, 1025, 75));
+        root.getChildren().add(new Line(25 * width_upscale, 25 * height_upscale, 1025 * width_upscale, 25 * height_upscale));
+        root.getChildren().add(new Line(25 * width_upscale, 25 * height_upscale, 25 * width_upscale, 475 * height_upscale));
+        root.getChildren().add(new Line(25 * width_upscale, 475 * height_upscale, 1025 * width_upscale, 475 * height_upscale));
+        root.getChildren().add(new Line(1025 * width_upscale, 475 * height_upscale, 1025 * width_upscale, 25 * height_upscale));
 
         // adding first pair
         addPair();
 
         // buttons section
         // pause
-        button_pause.setTranslateX(1100);
-        button_pause.setTranslateY(430);
-        button_pause.setMinWidth(270);
-        button_pause.setMinHeight(25);
+        button_pause.setTranslateX(1100 * width_upscale);
+        button_pause.setTranslateY(310 * height_upscale);
+        button_pause.setMinWidth(133 * width_upscale);
+        button_pause.setMinHeight(25 * height_upscale);
 
         button_pause.setOnAction(new EventHandler<ActionEvent>() {
             @Override
@@ -275,10 +457,10 @@ public class Main extends Application {
 
         root.getChildren().add(button_pause);
 
-        button_start.setTranslateX(1100);
-        button_start.setTranslateY(465);
-        button_start.setMinWidth(270);
-        button_start.setMinHeight(25);
+        button_start.setTranslateX(1237 * width_upscale);
+        button_start.setTranslateY(310 * height_upscale);
+        button_start.setMinWidth(133 * width_upscale);
+        button_start.setMinHeight(25 * height_upscale);
 
         button_start.setOnAction(new EventHandler<ActionEvent>() {
             @Override
@@ -290,20 +472,28 @@ public class Main extends Application {
         root.getChildren().add(button_start);
 
         //pushing back from this frame
-        button_back.setTranslateX(20);
-        button_back.setTranslateY(20);
-        button_back.setMinWidth(150);
-        button_back.setMinHeight(25);
+        button_back.setTranslateX(1100 * width_upscale);
+        button_back.setTranslateY(340 * height_upscale);
+        button_back.setMinWidth(133 * width_upscale);
+        button_back.setMinHeight(25 * height_upscale);
 
         root.getChildren().add(button_back);
+
+        //exit button
+        button_exit.setTranslateX(1237 * width_upscale);
+        button_exit.setTranslateY(340 * height_upscale);
+        button_exit.setMinWidth(133 * width_upscale);
+        button_exit.setMinHeight(25 * height_upscale);
+
+        root.getChildren().add(button_exit);
 
         // sliders section
 
 
         // balls_amount slider
         pair_am_lab.setLabelFor(pair_am_sl);
-        pair_am_lab.setTranslateX(1150);
-        pair_am_lab.setTranslateY(75);
+        pair_am_lab.setTranslateX(1150 * width_upscale);
+        pair_am_lab.setTranslateY(25 * height_upscale);
         pair_am_lab.setFont(new Font(22));
 
         pair_am_sl.setMin(1);
@@ -312,10 +502,10 @@ public class Main extends Application {
         pair_am_sl.setShowTickLabels(true);
         pair_am_sl.setMajorTickUnit(10);
 
-        pair_am_sl.setTranslateX(1100);
-        pair_am_sl.setTranslateY(100);
-        pair_am_sl.setMinWidth(275);
-        pair_am_sl.setMinHeight(40);
+        pair_am_sl.setTranslateX(1100 * width_upscale);
+        pair_am_sl.setTranslateY(50 * height_upscale);
+        pair_am_sl.setMinWidth(275 * width_upscale);
+        pair_am_sl.setMinHeight(40 * height_upscale);
 
         root.getChildren().add(pair_am_sl);
         root.getChildren().add(pair_am_lab);
@@ -327,14 +517,14 @@ public class Main extends Application {
         init_speed_sl.setShowTickLabels(true);
         init_speed_sl.setMajorTickUnit(5);
 
-        init_speed_sl.setTranslateX(1100);
-        init_speed_sl.setTranslateY(170);
-        init_speed_sl.setMinWidth(275);
-        init_speed_sl.setMinHeight(40);
+        init_speed_sl.setTranslateX(1100 * width_upscale);
+        init_speed_sl.setTranslateY(120 * height_upscale);
+        init_speed_sl.setMinWidth(275 * width_upscale);
+        init_speed_sl.setMinHeight(40 * height_upscale);
 
         init_speed_lab.setLabelFor(init_speed_sl);
-        init_speed_lab.setTranslateX(1125);
-        init_speed_lab.setTranslateY(145);
+        init_speed_lab.setTranslateX(1125 * width_upscale);
+        init_speed_lab.setTranslateY(95 * height_upscale);
         init_speed_lab.setFont(new Font(22));
 
         root.getChildren().add(init_speed_sl);
@@ -346,15 +536,15 @@ public class Main extends Application {
         curve_rad_sl.setValue(100);
         curve_rad_sl.setShowTickLabels(true);
 
-        curve_rad_sl.setTranslateX(1100);
-        curve_rad_sl.setTranslateY(240);
-        curve_rad_sl.setMinWidth(275);
-        curve_rad_sl.setMaxWidth(275);
-        curve_rad_sl.setMinHeight(40);
+        curve_rad_sl.setTranslateX(1100 * width_upscale);
+        curve_rad_sl.setTranslateY(190 * height_upscale);
+        curve_rad_sl.setMinWidth(275 * width_upscale);
+        curve_rad_sl.setMaxWidth(275 * width_upscale);
+        curve_rad_sl.setMinHeight(40 * height_upscale);
 
         curve_rad_lab.setLabelFor(curve_rad_sl);
-        curve_rad_lab.setTranslateX(1125);
-        curve_rad_lab.setTranslateY(215);
+        curve_rad_lab.setTranslateX(1125 * width_upscale);
+        curve_rad_lab.setTranslateY(165 * height_upscale);
         curve_rad_lab.setFont(new Font(22));
 
         root.getChildren().add(curve_rad_sl);
@@ -367,21 +557,21 @@ public class Main extends Application {
         wall_speed_sl.setShowTickLabels(true);
         wall_speed_sl.setMajorTickUnit(5);
 
-        wall_speed_sl.setTranslateX(1100);
-        wall_speed_sl.setTranslateY(310);
-        wall_speed_sl.setMinWidth(275);
-        wall_speed_sl.setMinHeight(40);
+        wall_speed_sl.setTranslateX(1100 * width_upscale);
+        wall_speed_sl.setTranslateY(260 * height_upscale);
+        wall_speed_sl.setMinWidth(275 * width_upscale);
+        wall_speed_sl.setMinHeight(40 * height_upscale);
 
         wall_speed_lab.setLabelFor(wall_speed_sl);
-        wall_speed_lab.setTranslateX(1125);
-        wall_speed_lab.setTranslateY(285);
+        wall_speed_lab.setTranslateX(1125 * width_upscale);
+        wall_speed_lab.setTranslateY(235 * height_upscale);
         wall_speed_lab.setFont(new Font(22));
 
         root.getChildren().add(wall_speed_sl);
         root.getChildren().add(wall_speed_lab);
 
         //ball_rad slider
-
+/*
         ball_rad_sl.setMin(5);
         ball_rad_sl.setMax(30);
         ball_rad_sl.setValue(10);
@@ -402,6 +592,8 @@ public class Main extends Application {
         root.getChildren().add(ball_rad_lab);
 
 
+ */
+
 
         AnimationTimer timer = new AnimationTimer() {
             @Override
@@ -418,16 +610,21 @@ public class Main extends Application {
     // button actions
     private void buttonStartAction() {
 
+        lines_amount = 0;
+
         pause = false;
         button_pause.setText("Пауза");
 
+
         l_lim = base_l_lim;
 
-        ball_rad = Math.round((float)ball_rad_sl.getValue());
+        //ball_rad = Math.round((float)ball_rad_sl.getValue());
 
         // renewing lineChart
 
         time_passed = 0;
+        time = new Date();
+        start_time = time.getTime();
         root.getChildren().remove(lineChart);
 
         lineChart = null;
@@ -436,11 +633,11 @@ public class Main extends Application {
         lineChart = new LineChart<Number, Number>(time_axis, dist_axis);
         series = new XYChart.Series<Number, Number>();
 
-        lineChart.setTranslateY(550);
-        lineChart.setMaxHeight(300);
-        lineChart.setMinHeight(300);
-        lineChart.setMinWidth(700);
-        lineChart.setMaxWidth(700);
+        lineChart.setTranslateY(480 * height_upscale);
+        lineChart.setMaxHeight(370 * height_upscale);
+        lineChart.setMinHeight(370 * height_upscale);
+        lineChart.setMinWidth(700 * width_upscale);
+        lineChart.setMaxWidth(700 * width_upscale);
 
         lineChart.setCreateSymbols(false);
         lineChart.setLegendVisible(false);
@@ -454,6 +651,8 @@ public class Main extends Application {
 
         for (int ii = 0; ii < 20; ii++) {
             statistics[ii] = 0;
+            stat_x[ii] = 0;
+            stat_y[ii] = 0;
         }
         int j = 0;
 
@@ -466,8 +665,8 @@ public class Main extends Application {
 
         pair_am = Math.round(pair_am_sl.getValue());
         wall_speed = Math.round(wall_speed_sl.getValue());
-        double new_rad_x = Math.round(curve_rad_sl.getValue());
-        init_speed = Math.round(init_speed_sl.getValue());
+        double new_rad_x = Math.round(curve_rad_sl.getValue()) * width_upscale;
+        init_speed = Math.round(init_speed_sl.getValue()) * total_upscale;
 
         all_balls.forEach(s -> {
             root.getChildren().remove(s[0]);
@@ -525,6 +724,8 @@ public class Main extends Application {
         } else {
             button_pause.setText("Пауза");
             pause = false;
+            time = new Date();
+            start_time = time.getTime();
         }
     }
 
@@ -574,14 +775,31 @@ public class Main extends Application {
     // loop function
     private void update() {
 
+        if (box_hist_1.isSelected())
+            barChart.setVisible(true);
+        else
+            barChart.setVisible(false);
+
+        if (box_hist_2.isSelected())
+            bar_x.setVisible(true);
+        else
+            bar_x.setVisible(false);
+
+        if (box_hist_3.isSelected())
+            bar_y.setVisible(true);
+        else
+            bar_y.setVisible(false);
+
         if (!pause) {
 
             int i = 0;
 
             this_turn_dist = 0;
+            this_turn_x = 0;
+            this_turn_y = 0;
             //moving the walls
             // setting bot limit of x to 50, top limit to 150
-            if (l_lim < 50 || l_lim > 150) {
+            if (l_lim < 50 * width_upscale || l_lim > 150 * width_upscale) {
                 wall_speed *= -1;
             }
             l_lim += wall_speed;
@@ -616,11 +834,9 @@ public class Main extends Application {
 
                     boolean positive_curve_flag = false;
                     boolean curved = true;
-                    boolean bumped_left = false;
 
                     if (s.getBoundsInParent().intersects(line1.getBoundsInParent())) {
                         s.Bump_left(wall_speed);
-                        bumped_left = true;
                     }
 
                     if (rad_x > 0) {
@@ -711,6 +927,17 @@ public class Main extends Application {
                     }
 
                     //  обработчик коллизии верхней\нижней стенок
+                    bound2 = s.localToScene(s.getBoundsInLocal());
+                    min_y = bound2.getMinY();
+                    max_y = bound2.getMaxY();
+
+                    if (min_y < t_lim - 1) {
+                        s.shiftSpecBot(t_lim - 1 - min_y);
+                    }
+                    if (max_y > b_lim + 1) {
+                        s.shiftSpecTop(max_y - b_lim - 1);
+                    }
+                    /*
                     while (flag) {
                         bound2 = s.localToScene(s.getBoundsInLocal());
 
@@ -729,8 +956,13 @@ public class Main extends Application {
                             s.shiftTop();
 
                     }
+                    
+                     */
+
+                    // обработчик коллизии с дугой
                     if (curved) {
                         if (positive_curve_flag)
+                            // c выгнутой дугой
                             while (positive_curve_flag) {
                                 bound2 = s.localToScene(s.getBoundsInLocal());
 
@@ -739,7 +971,7 @@ public class Main extends Application {
                                 max_x = bound2.getMaxX();
                                 max_y = bound2.getMaxY();
 
-                                if (max_x < r_lim)
+                                if (max_x < r_lim + 2)
                                     break;
 
                                 // coordinates of ball centre
@@ -775,6 +1007,7 @@ public class Main extends Application {
 
                             }
                         else {
+                            // с вогнутой дугой
                             positive_curve_flag = true;
                             while (positive_curve_flag) {
                                 bound2 = s.localToScene(s.getBoundsInLocal());
@@ -859,16 +1092,26 @@ public class Main extends Application {
                 all_links.get(pos).setStartY(y_coords[0]);
                 all_links.get(pos).setEndY(y_coords[1]);
 
-                double curr_dist = Math.sqrt(Math.pow((x_coords[1] - x_coords[0]), 2) + Math.pow((y_coords[1] - y_coords[0]), 2));
-                this_turn_dist += curr_dist;
+                this_turn_x += Math.abs(x_coords[0] - x_coords[1]) / (float)width_upscale;
+                this_turn_y += Math.abs(y_coords[1] - y_coords[0]) / (float)height_upscale;
+                this_turn_dist = (float)Math.sqrt(Math.pow((float)this_turn_x, 2) + Math.pow((float)this_turn_y, 2));
             });
 
             this_turn_dist /= pair_am;
+            this_turn_x /= pair_am;
+            this_turn_y /= pair_am;
+
+            time = new Date();
+
+            double delta_time = (time.getTime() - start_time) * 0.001;
+            start_time = time.getTime();
 
             modifyLineChart(this_turn_dist);
-            time_passed ++;
+            time_passed += delta_time;
 
-            modifyBarChart(this_turn_dist);
+            modifyBarChart(this_turn_dist, delta_time);
+            modifyBarX(this_turn_x, delta_time);
+            modifyBarY(this_turn_y, delta_time);
 
             int j = 0;
 
@@ -876,13 +1119,25 @@ public class Main extends Application {
                 data.setYValue(statistics[j]);
                 j++;
             }
+
+            j = 0;
+            for (XYChart.Data<String, Number> data: series_x.getData()) {
+                data.setYValue(stat_x[j]);
+                j++;
+            }
+
+            j = 0;
+            for (XYChart.Data<String, Number> data: series_y.getData()) {
+                data.setYValue(stat_y[j]);
+                j++;
+            }
+
         }
 
         pair_am_lab.setText("Число пар: " + Math.round(pair_am_sl.getValue()));
         init_speed_lab.setText("Начальная скорость: " + Math.round(init_speed_sl.getValue()));
         curve_rad_lab.setText("Радиус дуги: " + Math.round(curve_rad_sl.getValue()));
         wall_speed_lab.setText("Скорость стенки: " + Math.round(wall_speed_sl.getValue()));
-        ball_rad_lab.setText("Радиус шаров: " + Math.round(ball_rad_sl.getValue()));
     }
 
     // just supportive function
@@ -898,7 +1153,7 @@ public class Main extends Application {
         double value;
         if (rad_x != 0) {
             value = Math.pow(x - r_lim, 2) / Math.pow(rad_x, 2) + Math.pow(y - cent_y, 2) / Math.pow(rad_y, 2);
-            return value > 1.05;
+            return value > 1.1;
         } else {
             return x > r_lim || y < t_lim || y > b_lim;
         }
@@ -919,7 +1174,7 @@ public class Main extends Application {
         int number;
         int radius;
 
-        Ball(int x, int y, int r, double s_x, double s_y, Color color, int numb) {
+        Ball(double x, double y, int r, double s_x, double s_y, Color color, int numb) {
             super(x, y, r, color);
 
 
@@ -994,7 +1249,8 @@ public class Main extends Application {
 
                 tmp = Math.pow(xe - x_pos, 2) + Math.pow(ye - y_pos, 2) - this.radius * this.radius;
 
-                if (tmp * saved < 0) {
+                if (tmp * saved < 0 && x_arc_pos > r_lim) {
+
                     x_arc_pos += xe;
                     y_arc_pos += ye;
                     count++;
@@ -1164,6 +1420,12 @@ public class Main extends Application {
         void shiftSpecRight(double x) {
             setTranslateX(getTranslateX() + x);
         }
+        void shiftSpecBot(double y) {
+            setTranslateY(getTranslateY() + y);
+        }
+        void shiftSpecTop(double y) {
+            setTranslateY(getTranslateY() - y);
+        }
 
     }
 
@@ -1171,6 +1433,13 @@ public class Main extends Application {
     @Override
     public void start(Stage stage) throws Exception{
         Scene scene = new Scene(createContent());
+
+        button_exit.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                stage.close();
+            }
+        });
 
         Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
 

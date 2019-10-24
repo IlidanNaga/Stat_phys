@@ -1,15 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="cdb932d9-7e58-4d94-93a9-e7b232ef17da" name="Default" comment="">
+    <list default="true" id="cdb932d9-7e58-4d94-93a9-e7b232ef17da" name="Default" comment="e">
+      <change afterPath="$PROJECT_DIR$/src/sample/Menu.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/2DPool/sample/Main$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/2DPool/sample/Main$1.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/2DPool/sample/Main$2.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/2DPool/sample/Main$2.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/2DPool/sample/Main$3.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/2DPool/sample/Main$3.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/2DPool/sample/Main$4.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/2DPool/sample/Main$4.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/2DPool/sample/Main$Ball.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/2DPool/sample/Main$Ball.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/out/production/2DPool/sample/Main.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/2DPool/sample/Main.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/sample/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/sample/Main.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/2DPool.iml" beforeDir="false" afterPath="$PROJECT_DIR$/2DPool.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/2DPool/sample/Main$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/2DPool/sample/Main$2.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/2DPool/sample/Main$3.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/2DPool/sample/Main$4.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/2DPool/sample/Main$Ball.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/2DPool/sample/Main.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/sample/Controller.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/sample/Controller.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/sample/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/sample/Experiment.java" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -118,7 +121,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Application.Main">
+  <component name="RunManager" selected="Application.Menu">
     <configuration default="true" type="DartUnitRunConfigurationType" factoryName="DartUnit">
       <option name="VMOptions" />
       <option name="arguments" />
@@ -133,6 +136,34 @@
     </configuration>
     <configuration default="true" type="Applet">
       <option name="POLICY_FILE" value="$APPLICATION_HOME_DIR$/bin/appletviewer.policy" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Experiment" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="sample.Experiment" />
+      <module name="2DPool" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="sample.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="HorizontalBarChartDemo" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="sample.HorizontalBarChartDemo" />
+      <module name="2DPool" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="sample.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
@@ -153,6 +184,20 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <configuration name="Menu" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="sample.Menu" />
+      <module name="2DPool" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="sample.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="Test_walls" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="sample.Test_walls" />
       <module name="2DPool" />
@@ -169,20 +214,6 @@
     </configuration>
     <configuration default="true" type="Application" factoryName="Application">
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="second_try" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="sample.second_try" />
-      <module name="2DPool" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="sample.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
@@ -235,14 +266,18 @@
     <list>
       <item itemvalue="Application.Main" />
       <item itemvalue="Application.Test_walls" />
-      <item itemvalue="Application.second_try" />
       <item itemvalue="Application.subtraction_attempt" />
+      <item itemvalue="Application.HorizontalBarChartDemo" />
+      <item itemvalue="Application.Experiment" />
+      <item itemvalue="Application.Menu" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Application.subtraction_attempt" />
-        <item itemvalue="Application.second_try" />
+        <item itemvalue="Application.Menu" />
+        <item itemvalue="Application.Experiment" />
         <item itemvalue="Application.Test_walls" />
+        <item itemvalue="Application.HorizontalBarChartDemo" />
+        <item itemvalue="Application.subtraction_attempt" />
       </list>
     </recent_temporary>
   </component>
@@ -260,7 +295,35 @@
       <workItem from="1569433269364" duration="16094000" />
       <workItem from="1569931970710" duration="13001000" />
       <workItem from="1570288154790" duration="6000" />
-      <workItem from="1570311589186" duration="38668000" />
+      <workItem from="1570311589186" duration="38992000" />
+      <workItem from="1570473043258" duration="409000" />
+      <workItem from="1570514411192" duration="1352000" />
+      <workItem from="1570515993988" duration="28000" />
+      <workItem from="1570516058425" duration="8327000" />
+      <workItem from="1570534183790" duration="778000" />
+      <workItem from="1570538562714" duration="12036000" />
+      <workItem from="1570600317658" duration="5270000" />
+      <workItem from="1570640770095" duration="8451000" />
+      <workItem from="1570702773466" duration="731000" />
+      <workItem from="1570709606078" duration="3664000" />
+      <workItem from="1571034840851" duration="232000" />
+      <workItem from="1571035710329" duration="2170000" />
+      <workItem from="1571071997234" duration="752000" />
+      <workItem from="1571168081052" duration="538000" />
+      <workItem from="1571330927197" duration="257000" />
+      <workItem from="1571343636578" duration="2343000" />
+      <workItem from="1571379685206" duration="983000" />
+      <workItem from="1571380862618" duration="154000" />
+      <workItem from="1571381299931" duration="362000" />
+      <workItem from="1571391285167" duration="147000" />
+      <workItem from="1571514564372" duration="31000" />
+      <workItem from="1571514942865" duration="3286000" />
+      <workItem from="1571559952846" duration="185000" />
+      <workItem from="1571601427546" duration="83000" />
+      <workItem from="1571638309518" duration="542000" />
+      <workItem from="1571640149557" duration="134000" />
+      <workItem from="1571735551522" duration="223000" />
+      <workItem from="1571940036305" duration="1381000" />
     </task>
     <servers />
   </component>
@@ -272,7 +335,9 @@
       <map>
         <entry key="MAIN">
           <value>
-            <State />
+            <State>
+              <option name="COLUMN_ORDER" />
+            </State>
           </value>
         </entry>
       </map>
